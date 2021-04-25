@@ -247,13 +247,18 @@ class MainComponent : public Component {
   };
 
   bool OnEvent(Event event) final {
+
     int r = r_;
     int g = g_;
     int b = b_;
     int h = h_;
     int s = s_;
     int v = v_;
-    bool out = Component::OnEvent(std::move(event));
+
+    bool out = false;
+    if (!event.is_mouse() || !OnMouseEvent(std::move(event)))
+      out = Component::OnEvent(std::move(event));
+
     if (h != h_ || s != s_ || v != v_) {
       ToRGB(h_, s_, v_,  //
             r_, g_, b_);
@@ -262,6 +267,20 @@ class MainComponent : public Component {
             h_, s_, v_);
     }
     return out;
+  }
+
+  bool OnMouseEvent(Event event) {
+    if (!box_color_.Contain(event.mouse().x, event.mouse().y))
+      return false;
+    TakeFocus();
+    if (event.mouse().button == Mouse::Left &&
+        event.mouse().motion == Mouse::Pressed) {
+      v_ = (event.mouse().x - box_color_.x_min) * 255 /
+           (box_color_.x_max - box_color_.x_min);
+      s_ = (event.mouse().y - box_color_.y_min) * 255 /
+           (box_color_.y_max - box_color_.y_min);
+    }
+    return true;
   }
 
   int& r_;
