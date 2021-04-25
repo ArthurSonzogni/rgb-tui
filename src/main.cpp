@@ -117,7 +117,7 @@ class GaugeInteger: public Component {
                text(title_) | style | vcenter,
                hbox({
                    text(L"["),
-                   gauge(percent) | xflex | reflect(gauge_box_),
+                   gauge(percent) |underlined | xflex | reflect(gauge_box_),
                    text(L"]"),
                }) | xflex,
            }) |
@@ -171,13 +171,17 @@ class MainComponent : public Component {
  public:
   MainComponent(int& r, int& g, int& b) : r_(r), g_(g), b_(b) {
     Add(&container_);
-    container_.Add(&color_red_);
-    container_.Add(&color_green_);
-    container_.Add(&color_blue_);
     container_.Add(&color_hue_);
     container_.Add(&color_saturation_);
     container_.Add(&color_value_);
+    container_.Add(&color_red_);
+    container_.Add(&color_green_);
+    container_.Add(&color_blue_);
     ToHSV(r_, g_, b_, h_, s_, v_);
+    box_color_.x_min = 0;
+    box_color_.y_min = 0;
+    box_color_.x_max = 80;
+    box_color_.y_max = 1;
   }
 
  private:
@@ -189,28 +193,57 @@ class MainComponent : public Component {
                                       int(v_ * 100. / 255.)   //
     );
 
-    return vbox({
-        window(text(L"[ rgb_tui ]") | center,  //
-               hbox({
-                   ColorTile(r_, g_, b_),
-                   separator(),
-                   vbox({
-                       color_red_.Render(),
-                       color_green_.Render(),
-                       color_blue_.Render(),
-                       separator(),
-                       color_hue_.Render(),
-                       color_saturation_.Render(),
-                       color_value_.Render(),
-                   }) | flex,
-               })),
+    int hue = h_;
+    Elements array;
+    int x_length = std::max(10, box_color_.x_max - box_color_.x_min) + 1;
+    int y_length = 11;
+    for (int y = 0; y < y_length; ++y) {
+      Elements line;
+      for (int x = 0; x < x_length; ++x) {
+        int saturation_1 = 255 * (y + 0.0f) / float(y_length);
+        int saturation_2 = 255 * (y + 0.5f) / float(y_length);
+        int value = 255 * x / float(x_length);
+        line.push_back(text(L"▀")                                     //
+                       | color(Color::HSV(hue, saturation_1, value))  //
+                       | bgcolor(Color::HSV(hue, saturation_2, value)));
+      }
+      array.push_back(hbox(std::move(line)));
+    }
+    for (int saturation = 0; saturation < 255; saturation += 20) {
+      Elements line;
+      // for (int hue = 0; hue < 255; hue += 2) {
+      array.push_back(hbox(std::move(line)));
+    }
 
-        hbox({
-            window(text(L"Hexa") | center, HexaElement(r_, g_, b_)),
-            window(text(L"RGB") | center, text(to_wstring(rgb_txt))),
-            window(text(L"HSV") | center, text(to_wstring(hsv_txt))),
-        }),
-    }) | size(WIDTH, LESS_THAN, 80);
+    return vbox({
+               window(
+                   text(L"[ rgb-tui ]") | center,  //
+                   vbox({
+                       hbox({
+                           vbox(std::move(array)) | flex | reflect(box_color_),
+                       }),
+                       separator(),
+                       hbox({
+                           ColorTile(r_, g_, b_),
+                           separator(),
+                           vbox({
+                               color_hue_.Render(),
+                               color_saturation_.Render(),
+                               color_value_.Render(),
+                               separator(),
+                               color_red_.Render(),
+                               color_green_.Render(),
+                               color_blue_.Render(),
+                           }) | flex,
+                       }),
+                   })),
+               hbox({
+                   window(text(L" Hexa ") | center, HexaElement(r_, g_, b_)),
+                   window(text(L" RGB ") | center, text(to_wstring(rgb_txt))),
+                   window(text(L" HSV ") | center, text(to_wstring(hsv_txt))),
+               }),
+           }) |
+           size(WIDTH, LESS_THAN, 80);
   };
 
   bool OnEvent(Event event) final {
@@ -224,8 +257,7 @@ class MainComponent : public Component {
     if (h != h_ || s != s_ || v != v_) {
       ToRGB(h_, s_, v_,  //
             r_, g_, b_);
-    }
-    else if (r != r_ || g != g_ || b != b_) {
+    } else if (r != r_ || g != g_ || b != b_) {
       ToHSV(r_, g_, b_,  //
             h_, s_, v_);
     }
@@ -238,13 +270,15 @@ class MainComponent : public Component {
   int h_;
   int s_;
   int v_;
-  GaugeInteger color_red_ = GaugeInteger        ( L"Red:        ", r_, 0, 255);
-  GaugeInteger color_green_ = GaugeInteger      ( L"Green:      ", g_, 0, 255);
-  GaugeInteger color_blue_ = GaugeInteger       ( L"Blue:       ", b_, 0, 255);
-  GaugeInteger color_hue_ = GaugeInteger        ( L"Hue:        ", h_, 0, 255);
-  GaugeInteger color_saturation_ = GaugeInteger ( L"Saturation: ", s_, 0, 255);
-  GaugeInteger color_value_ = GaugeInteger      ( L"Value:      ", v_, 0, 255);
+  GaugeInteger color_red_ = GaugeInteger(L"Red:        ", r_, 0, 255);
+  GaugeInteger color_green_ = GaugeInteger(L"Green:      ", g_, 0, 255);
+  GaugeInteger color_blue_ = GaugeInteger(L"Blue:       ", b_, 0, 255);
+  GaugeInteger color_hue_ = GaugeInteger(L"Hue:        ", h_, 0, 255);
+  GaugeInteger color_saturation_ = GaugeInteger(L"Saturation: ", s_, 0, 255);
+  GaugeInteger color_value_ = GaugeInteger(L"Value:      ", v_, 0, 255);
   Container container_ = Container::Vertical();
+
+  Box box_color_;
 };
 
 int main(void) {

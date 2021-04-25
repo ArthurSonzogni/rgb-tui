@@ -30,15 +30,15 @@ endif()
 
 # ------------------------------------------------------------------------------
 
-project(rgb_tui
+project(rgb-tui
   LANGUAGES CXX
   VERSION 1.0.0
 )
 
-add_executable(rgb_tui src/main.cpp)
-target_include_directories(rgb_tui PRIVATE src)
+add_executable(rgb-tui src/main.cpp)
+target_include_directories(rgb-tui PRIVATE src)
 
-target_link_libraries(rgb_tui
+target_link_libraries(rgb-tui
   PRIVATE ftxui::screen
   PRIVATE ftxui::dom
   PRIVATE ftxui::component # Not needed for this example.
@@ -46,6 +46,6 @@ target_link_libraries(rgb_tui
 )
 
 # C++17 is used. We requires fold expressions at least.
-set_target_properties(rgb_tui PROPERTIES CXX_STANDARD 17)
+set_target_properties(rgb-tui PROPERTIES CXX_STANDARD 17)
 
-install(TARGETS rgb_tui RUNTIME DESTINATION "bin")
+install(TARGETS rgb-tui RUNTIME DESTINATION "bin")
