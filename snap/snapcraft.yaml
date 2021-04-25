@@ -1,0 +1,31 @@
+name: ftxui-starter
+version: '1.0'
+summary: A simple starter project for the FTXUI library.
+description: A simple starter project for the FTXUI library.
+
+grade: stable
+confinement: strict
+base: core18
+
+apps:
+  ftxui-starter:
+    command: ftxui-starter
+
+parts:
+  ftxui-starter:
+    plugin: cmake
+    source: https://github.com/ArthurSonzogni/ftxui-starter
+    source-type: git
+    source-depth: 1
+    build-snaps: [cmake/latest/edge] # We need cmake >= 3.11
+    override-build: |
+      /snap/bin/cmake \
+        -DCMAKE_INSTALL_PREFIX=$SNAPCRAFT_PART_INSTALL/usr/local \
+        -DCMAKE_BUILD_TYPE=Release \
+        $SNAPCRAFT_PART_SRC
+      make -j 4
+      make install
+
+passthrough:
+  title: ftxui-starter
+  license: MIT
