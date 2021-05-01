@@ -7,6 +7,7 @@
 #include "ftxui/component/menu.hpp"
 #include "ftxui/component/radiobox.hpp"
 #include "ftxui/component/screen_interactive.hpp"
+#include "ftxui/component/slider.hpp"
 #include "ftxui/component/toggle.hpp"
 #include "ftxui/dom/elements.hpp"
 #include "ftxui/screen/screen.hpp"
@@ -100,83 +101,16 @@ void ToHSV(int r, int g, int b, int& h, int& s, int& v) {
     h = 171 + 43 * (r - g) / (rgbMax - rgbMin);
 }
 
-class GaugeInteger: public Component {
- public:
-  GaugeInteger(std::wstring title, int& value, int min, int max)
-      : title_(title), value_(value), min_(min), max_(max) {}
-
-  std::function<void()> increase = [] {};
-  std::function<void()> decrease = [] {};
-
-  Element Render() {
-    auto style = dim;
-    auto gauge_color =
-        Focused() ? color(Color::GrayLight) : color(Color::GrayDark);
-    float percent = float(value_ - min_) / float(max_ - min_);
-    return hbox({
-               text(title_) | style | vcenter,
-               hbox({
-                   text(L"["),
-                   gauge(percent) |underlined | xflex | reflect(gauge_box_),
-                   text(L"]"),
-               }) | xflex,
-           }) |
-           gauge_color | xflex | reflect(box_);
-  }
-
-  bool OnEvent(Event event) final {
-    if (event.is_mouse())
-      return OnMouseEvent(event);
-
-    if (event == Event::ArrowLeft || event == Event::Character('h')) {
-      value_ -= increment_;
-      value_ = std::max(value_, min_);
-      return true;
-    }
-
-    if (event == Event::ArrowRight || event == Event::Character('l')) {
-      value_ += increment_;
-      value_ = std::min(value_, max_);
-      return true;
-    }
-
-    return Component::OnEvent(event);
-  }
-
-  bool OnMouseEvent(Event event) {
-    if (!box_.Contain(event.mouse().x, event.mouse().y))
-      return false;
-    TakeFocus();
-    if (!gauge_box_.Contain(event.mouse().x, event.mouse().y))
-      return false;
-    if (event.mouse().button == Mouse::Left &&
-        event.mouse().motion == Mouse::Pressed) {
-      value_ = min_ + (event.mouse().x - gauge_box_.x_min) * (max_ - min_) /
-                          (gauge_box_.x_max - gauge_box_.x_min);
-    }
-    return true;
-  }
-
- private:
-  int& value_;
-  int min_;
-  int max_;
-  int increment_ = 1;
-  std::wstring title_;
-  Box box_;
-  Box gauge_box_;
-};
-
 class MainComponent : public Component {
  public:
   MainComponent(int& r, int& g, int& b) : r_(r), g_(g), b_(b) {
     Add(&container_);
-    container_.Add(&color_hue_);
-    container_.Add(&color_saturation_);
-    container_.Add(&color_value_);
-    container_.Add(&color_red_);
-    container_.Add(&color_green_);
-    container_.Add(&color_blue_);
+    container_.Add(color_hue_.get());
+    container_.Add(color_saturation_.get());
+    container_.Add(color_value_.get());
+    container_.Add(color_red_.get());
+    container_.Add(color_green_.get());
+    container_.Add(color_blue_.get());
     ToHSV(r_, g_, b_, h_, s_, v_);
     box_color_.x_min = 0;
     box_color_.y_min = 0;
@@ -227,13 +161,13 @@ class MainComponent : public Component {
                            ColorTile(r_, g_, b_),
                            separator(),
                            vbox({
-                               color_hue_.Render(),
-                               color_saturation_.Render(),
-                               color_value_.Render(),
+                               color_hue_->Render(),
+                               color_saturation_->Render(),
+                               color_value_->Render(),
                                separator(),
-                               color_red_.Render(),
-                               color_green_.Render(),
-                               color_blue_.Render(),
+                               color_red_->Render(),
+                               color_green_->Render(),
+                               color_blue_->Render(),
                            }) | flex,
                        }),
                    })),
@@ -256,8 +190,10 @@ class MainComponent : public Component {
     int v = v_;
 
     bool out = false;
-    if (!event.is_mouse() || !OnMouseEvent(std::move(event)))
-      out = Component::OnEvent(std::move(event));
+
+    if (event.is_mouse())
+      out |= OnMouseEvent(std::move(event));
+    out |= Component::OnEvent(std::move(event));
 
     if (h != h_ || s != s_ || v != v_) {
       ToRGB(h_, s_, v_,  //
@@ -270,17 +206,33 @@ class MainComponent : public Component {
   }
 
   bool OnMouseEvent(Event event) {
-    if (!box_color_.Contain(event.mouse().x, event.mouse().y))
-      return false;
-    TakeFocus();
+    if (event.mouse().motion == Mouse::Released) {
+      captured_mouse_ = nullptr;
+      return true;
+    }
+
+    if (box_color_.Contain(event.mouse().x, event.mouse().y) &&
+        CaptureMouse(event)) {
+      TakeFocus();
+    }
+
     if (event.mouse().button == Mouse::Left &&
-        event.mouse().motion == Mouse::Pressed) {
+        event.mouse().motion == Mouse::Pressed &&
+        box_color_.Contain(event.mouse().x, event.mouse().y) &&
+        !captured_mouse_) {
+      captured_mouse_ = CaptureMouse(event);
+    }
+
+    if (captured_mouse_) {
       v_ = (event.mouse().x - box_color_.x_min) * 255 /
            (box_color_.x_max - box_color_.x_min);
       s_ = (event.mouse().y - box_color_.y_min) * 255 /
            (box_color_.y_max - box_color_.y_min);
+      v_ = std::max(0, std::min(255, v_));
+      s_ = std::max(0, std::min(255, s_));
+      return true;
     }
-    return true;
+    return false;
   }
 
   int& r_;
@@ -289,15 +241,16 @@ class MainComponent : public Component {
   int h_;
   int s_;
   int v_;
-  GaugeInteger color_red_ = GaugeInteger(L"Red:        ", r_, 0, 255);
-  GaugeInteger color_green_ = GaugeInteger(L"Green:      ", g_, 0, 255);
-  GaugeInteger color_blue_ = GaugeInteger(L"Blue:       ", b_, 0, 255);
-  GaugeInteger color_hue_ = GaugeInteger(L"Hue:        ", h_, 0, 255);
-  GaugeInteger color_saturation_ = GaugeInteger(L"Saturation: ", s_, 0, 255);
-  GaugeInteger color_value_ = GaugeInteger(L"Value:      ", v_, 0, 255);
+  ComponentPtr color_red_ = Slider(L"Red:        ", &r_, 0, 255, 1);
+  ComponentPtr color_green_ = Slider(L"Green:      ", &g_, 0, 255, 1);
+  ComponentPtr color_blue_ = Slider(L"Blue:       ", &b_, 0, 255, 1);
+  ComponentPtr color_hue_ = Slider(L"Hue:        ", &h_, 0, 255, 1);
+  ComponentPtr color_saturation_ = Slider(L"Saturation: ", &s_, 0, 255, 1);
+  ComponentPtr color_value_ = Slider(L"Value:      ", &v_, 0, 255, 1);
   Container container_ = Container::Vertical();
 
   Box box_color_;
+  CapturedMouse captured_mouse_;
 };
 
 int main(void) {
