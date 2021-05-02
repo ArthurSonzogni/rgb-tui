@@ -49,3 +49,21 @@ target_link_libraries(rgb-tui
 set_target_properties(rgb-tui PROPERTIES CXX_STANDARD 17)
 
 install(TARGETS rgb-tui RUNTIME DESTINATION "bin")
+
+set(CPACK_GENERATOR "DEB")
+set(CPACK_PACKAGE_NAME "rgb-tui")
+set(CPACK_PACKAGE_VENDOR "Arthur Sonzogni")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Arthur Sonzogni")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION})
+set(CPACK_PACKAGE_VERSION_MINOR "")
+set(CPACK_PACKAGE_VERSION_PATCH "")
+set(CPACK_DEBIAN_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/rgb-tui/")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "
+  A color picker with a terminal UI.
+")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS " ")
+set(CPACK_DEBIAN_PACKAGE_HOMEPAGE_URL "https://github.com/rgb-tui/")
+
+include(CPack)
+

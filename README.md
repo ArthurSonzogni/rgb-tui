@@ -1,21 +1,20 @@
-ftxui-starter
+rgb-tui
 -------------
 
-[![Snap Status](https://build.snapcraft.io/badge/ArthurSonzogni/ftxui-starter.svg)](https://build.snapcraft.io/user/ArthurSonzogni/ftxui-starter)
+A color picker with a terminal UI. Build with [FTXUI].
 
-[![Build Status](https://travis-ci.com/ArthurSonzogni/ftxui-starter.svg?branch=master)](https://travis-ci.com/ArthurSonzogni/ftxui-starter)
+![demo](./demo.gif)
 
-Minimal starter project using the [FTXUI library](https://github.com/ArthurSonzogni/ftxui)
+See [youtube]
+[youtube](https://www.youtube.com/watch?v=ERtUrToBWEM)
 
+Install
+-------
 
-# Build instructions:
-~~~bash
-mkdir build
-cd build
-cmake ..
-make -j3
-./ftxuistarter
-~~~
+[![rgb-tui](https://snapcraft.io/rgb-tui/badge.svg)](https://snapcraft.io/rgb-tui)
+```bash
+sudo snap install rgb-tui
+```
 
-## Linux snap build:
-Upload your game to github and visit https://snapcraft.io/build.
+[youtube]:https://www.youtube.com/watch?v=ERtUrToBWEM)
+[FTXUI]:https://github.com/ArthurSonzogni/FTXUI
