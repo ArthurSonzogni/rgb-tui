@@ -1,20 +1,20 @@
-name: ftxui-starter
+name: rgb-tui
 version: '1.0'
-summary: A simple starter project for the FTXUI library.
-description: A simple starter project for the FTXUI library.
+summary: A color picker in a terminal UI.
+description: A color picker in a terminal UI.
 
 grade: stable
 confinement: strict
 base: core18
 
 apps:
-  ftxui-starter:
-    command: ftxui-starter
+  rgb-tui:
+    command: rgb-tui
 
 parts:
-  ftxui-starter:
+  rgb-tui:
     plugin: cmake
-    source: https://github.com/ArthurSonzogni/ftxui-starter
+    source: https://github.com/ArthurSonzogni/rgb-tui
     source-type: git
     source-depth: 1
     build-snaps: [cmake/latest/edge] # We need cmake >= 3.11
@@ -27,5 +27,5 @@ parts:
       make install
 
 passthrough:
-  title: ftxui-starter
+  title: rgb-tui
   license: MIT
