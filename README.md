@@ -1,12 +1,12 @@
 rgb-tui
 -------------
 
-A color picker with a terminal UI. Build with [FTXUI].
+A color picker with a terminal UI. Build with [FTXUI](https://github.com/ArthurSonzogni/FTXUI)
 
 ![demo](./demo.gif)
 
-See [youtube]
-[youtube](https://www.youtube.com/watch?v=ERtUrToBWEM)
+See [youtube](https://www.youtube.com/watch?v=ERtUrToBWEM)
+
 
 Install
 -------
@@ -16,5 +16,3 @@ Install
 sudo snap install rgb-tui
 ```
 
-[youtube]:https://www.youtube.com/watch?v=ERtUrToBWEM)
-[FTXUI]:https://github.com/ArthurSonzogni/FTXUI
