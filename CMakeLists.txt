@@ -7,7 +7,7 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 
 FetchContent_Declare(ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG feature/mouse-support
+  GIT_TAG 9d15d1c275726d21081ef6912ff57f99f1c348d3
 )
 
 FetchContent_Declare(fmt
