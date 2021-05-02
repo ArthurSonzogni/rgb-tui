@@ -1,7 +1,7 @@
 rgb-tui
 -------------
 
-A color picker with a terminal UI. Build with [FTXUI](https://github.com/ArthurSonzogni/FTXUI)
+A color picker with a terminal UI. Built with [FTXUI](https://github.com/ArthurSonzogni/FTXUI)
 
 ![demo](./demo.gif)
 
