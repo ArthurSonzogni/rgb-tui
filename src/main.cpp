@@ -1,14 +1,8 @@
 #include <fmt/core.h>
 #include <cstddef>
 #include <iostream>
-#include "ftxui/component/checkbox.hpp"
-#include "ftxui/component/container.hpp"
-#include "ftxui/component/input.hpp"
-#include "ftxui/component/menu.hpp"
-#include "ftxui/component/radiobox.hpp"
+#include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
-#include "ftxui/component/slider.hpp"
-#include "ftxui/component/toggle.hpp"
 #include "ftxui/dom/elements.hpp"
 #include "ftxui/screen/screen.hpp"
 #include "ftxui/screen/string.hpp"
@@ -101,16 +95,10 @@ void ToHSV(int r, int g, int b, int& h, int& s, int& v) {
     h = 171 + 43 * (r - g) / (rgbMax - rgbMin);
 }
 
-class MainComponent : public Component {
+class MainComponent : public ComponentBase {
  public:
   MainComponent(int& r, int& g, int& b) : r_(r), g_(g), b_(b) {
-    Add(&container_);
-    container_.Add(color_hue_.get());
-    container_.Add(color_saturation_.get());
-    container_.Add(color_value_.get());
-    container_.Add(color_red_.get());
-    container_.Add(color_green_.get());
-    container_.Add(color_blue_.get());
+    Add(container_);
     ToHSV(r_, g_, b_, h_, s_, v_);
     box_color_.x_min = 0;
     box_color_.y_min = 0;
@@ -193,7 +181,7 @@ class MainComponent : public Component {
 
     if (event.is_mouse())
       out |= OnMouseEvent(std::move(event));
-    out |= Component::OnEvent(std::move(event));
+    out |= ComponentBase::OnEvent(std::move(event));
 
     if (h != h_ || s != s_ || v != v_) {
       ToRGB(h_, s_, v_,  //
@@ -241,13 +229,20 @@ class MainComponent : public Component {
   int h_;
   int s_;
   int v_;
-  ComponentPtr color_red_ = Slider(L"Red:        ", &r_, 0, 255, 1);
-  ComponentPtr color_green_ = Slider(L"Green:      ", &g_, 0, 255, 1);
-  ComponentPtr color_blue_ = Slider(L"Blue:       ", &b_, 0, 255, 1);
-  ComponentPtr color_hue_ = Slider(L"Hue:        ", &h_, 0, 255, 1);
-  ComponentPtr color_saturation_ = Slider(L"Saturation: ", &s_, 0, 255, 1);
-  ComponentPtr color_value_ = Slider(L"Value:      ", &v_, 0, 255, 1);
-  Container container_ = Container::Vertical();
+  Component color_hue_ = Slider(L"Hue:        ", &h_, 0, 255, 1);
+  Component color_saturation_ = Slider(L"Saturation: ", &s_, 0, 255, 1);
+  Component color_value_ = Slider(L"Value:      ", &v_, 0, 255, 1);
+  Component color_red_ = Slider(L"Red:        ", &r_, 0, 255, 1);
+  Component color_green_ = Slider(L"Green:      ", &g_, 0, 255, 1);
+  Component color_blue_ = Slider(L"Blue:       ", &b_, 0, 255, 1);
+  Component container_ = Container::Vertical({
+                                         color_hue_,
+                                         color_saturation_,
+                                         color_value_,
+                                         color_red_,
+                                         color_green_,
+                                         color_blue_,
+                                     });
 
   Box box_color_;
   CapturedMouse captured_mouse_;
@@ -258,8 +253,7 @@ int main(void) {
   int g = 0;
   int b = 0;
   auto screen = ScreenInteractive::TerminalOutput();
-  auto main_component = MainComponent(r, g, b);
-  screen.Loop(&main_component);
+  screen.Loop(Make<MainComponent>(r, g, b));
 
   return EXIT_SUCCESS;
 }
