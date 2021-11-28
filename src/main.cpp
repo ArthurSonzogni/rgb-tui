@@ -118,13 +118,34 @@ class MainComponent : public ComponentBase {
     int hue = h_;
     Elements array;
     int x_length = std::max(10, box_color_.x_max - box_color_.x_min) + 1;
-    int y_length = 11;
+    int y_length = 15;
+
+    int h, s, v;
+    ToHSV(r_, g_, b_, h, s, v);
+    int target_x = std::max(0, std::min(x_length - 1, (v * x_length) / 255));
+    int target_y =
+        std::max(0, std::min(2 * y_length - 1, (s * 2 * y_length) / 255));
+
     for (int y = 0; y < y_length; ++y) {
       Elements line;
       for (int x = 0; x < x_length; ++x) {
         int saturation_1 = 255 * (y + 0.0f) / float(y_length);
         int saturation_2 = 255 * (y + 0.5f) / float(y_length);
         int value = 255 * x / float(x_length);
+        if (x == target_x) {
+          if (2 * y == target_y) {
+            line.push_back(text(L"▀")                                     //
+                           | color(Color::HSV(hue, saturation_1, value))  //
+                           | bgcolor(Color::Black));                      //
+            continue;
+          }
+          if (2 * y == target_y + 1) {
+            line.push_back(text(L"▀")                                     //
+                           | color(Color::Black)//
+                           | bgcolor(Color::HSV(hue, saturation_2, value)));
+            continue;
+          }
+        }
         line.push_back(text(L"▀")                                     //
                        | color(Color::HSV(hue, saturation_1, value))  //
                        | bgcolor(Color::HSV(hue, saturation_2, value)));
