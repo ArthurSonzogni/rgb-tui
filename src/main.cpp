@@ -20,7 +20,7 @@ wchar_t HexLetter(int x) {
   if (x <= 9)
     return U'0' + x;
   else
-    return U'A' + x - 9;
+    return U'A' + x - 0xA;
 };
 
 std::wstring HexColor(int r, int g, int b) {
