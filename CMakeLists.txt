@@ -7,7 +7,7 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 
 FetchContent_Declare(ftxui
   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG cecd54df42dd66fdf8386ed461e16b725bffc827
+  GIT_TAG b56afce48ccd472cd2c3a53e619de0db1e7227a4
 )
 
 FetchContent_Declare(fmt
