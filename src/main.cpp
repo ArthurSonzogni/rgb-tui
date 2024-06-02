@@ -1,10 +1,7 @@
 #include <fmt/core.h>
-#include <cstddef>
-#include <iostream>
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
 #include "ftxui/dom/elements.hpp"
-#include "ftxui/screen/screen.hpp"
 #include "ftxui/screen/string.hpp"
 
 using namespace ftxui;
@@ -39,12 +36,7 @@ Element HexaElement(int r, int g, int b) {
   return text(HexColor(r, g, b));
 }
 
-void ToRGB(int h,
-           int s,
-           int v,
-           int& r,
-           int& g,
-           int& b) {
+void ToRGB(int h, int s, int v, int& r, int& g, int& b) {
   if (s == 0) {
     r = v;
     g = v;
@@ -118,7 +110,7 @@ class MainComponent : public ComponentBase {
     int hue = h_;
     Elements array;
     int x_length = std::max(10, box_color_.x_max - box_color_.x_min) + 1;
-    int y_length = 15;
+    int y_length = 16;
 
     int h, s, v;
     ToHSV(r_, g_, b_, h, s, v);
@@ -127,21 +119,21 @@ class MainComponent : public ComponentBase {
         std::max(0, std::min(2 * y_length - 1, (s * 2 * y_length) / 255));
 
     for (int y = 0; y < y_length; ++y) {
+      int saturation_1 = 255 * (y + 0.0f) / float(y_length);
+      int saturation_2 = 255 * (y + 0.5f) / float(y_length);
       Elements line;
       for (int x = 0; x < x_length; ++x) {
-        int saturation_1 = 255 * (y + 0.0f) / float(y_length);
-        int saturation_2 = 255 * (y + 0.5f) / float(y_length);
         int value = 255 * x / float(x_length);
         if (x == target_x) {
-          if (2 * y == target_y) {
+          if (2 * y == target_y - 1) {
             line.push_back(text(L"▀")                                     //
                            | color(Color::HSV(hue, saturation_1, value))  //
                            | bgcolor(Color::Black));                      //
             continue;
           }
-          if (2 * y == target_y + 1) {
-            line.push_back(text(L"▀")                                     //
-                           | color(Color::Black)//
+          if (2 * y == target_y) {
+            line.push_back(text(L"▀")             //
+                           | color(Color::Black)  //
                            | bgcolor(Color::HSV(hue, saturation_2, value)));
             continue;
           }
@@ -150,11 +142,6 @@ class MainComponent : public ComponentBase {
                        | color(Color::HSV(hue, saturation_1, value))  //
                        | bgcolor(Color::HSV(hue, saturation_2, value)));
       }
-      array.push_back(hbox(std::move(line)));
-    }
-    for (int saturation = 0; saturation < 255; saturation += 20) {
-      Elements line;
-      // for (int hue = 0; hue < 255; hue += 2) {
       array.push_back(hbox(std::move(line)));
     }
 
@@ -190,7 +177,6 @@ class MainComponent : public ComponentBase {
   };
 
   bool OnEvent(Event event) final {
-
     int r = r_;
     int g = g_;
     int b = b_;
@@ -257,13 +243,13 @@ class MainComponent : public ComponentBase {
   Component color_green_ = Slider(L"Green:      ", &g_, 0, 255, 1);
   Component color_blue_ = Slider(L"Blue:       ", &b_, 0, 255, 1);
   Component container_ = Container::Vertical({
-                                         color_hue_,
-                                         color_saturation_,
-                                         color_value_,
-                                         color_red_,
-                                         color_green_,
-                                         color_blue_,
-                                     });
+      color_hue_,
+      color_saturation_,
+      color_value_,
+      color_red_,
+      color_green_,
+      color_blue_,
+  });
 
   Box box_color_;
   CapturedMouse captured_mouse_;
