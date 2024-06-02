@@ -1,4 +1,5 @@
 #include <fmt/core.h>
+#include "clip.h"
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
 #include "ftxui/dom/elements.hpp"
@@ -7,7 +8,7 @@
 using namespace ftxui;
 
 Element ColorTile(int r, int g, int b) {
-  return text(L"")                        //
+  return text("")                         //
          | size(WIDTH, EQUAL, 20)         //
          | size(HEIGHT, EQUAL, 7)         //
          | bgcolor(Color::RGB(r, g, b));  //
@@ -20,9 +21,9 @@ wchar_t HexLetter(int x) {
     return U'A' + x - 0xA;
 };
 
-std::wstring HexColor(int r, int g, int b) {
-  std::wstring out;
-  out += L"#";
+std::string HexColor(int r, int g, int b) {
+  std::string out;
+  out += "#";
   out += HexLetter(r / 16);
   out += HexLetter(r % 16);
   out += HexLetter(g / 16);
@@ -96,6 +97,23 @@ class MainComponent : public ComponentBase {
     box_color_.y_min = 0;
     box_color_.x_max = 80;
     box_color_.y_max = 1;
+    clip::get_text(clipboard_);
+
+    // Copy buttons
+    for (int i = 0; i < output_.size(); i++) {
+      copy_button_text_.push_back(output_[i]());
+    }
+    ButtonOption button_option = ButtonOption::Animated();
+    for (int i = 0; i < output_.size(); i++) {
+      copy_button_.push_back(Button(
+          &copy_button_text_[i],
+          [this, i] {
+            clip::set_text(output_[i]());
+            clip::get_text(clipboard_);
+          },
+          button_option));
+      container_->Add(copy_button_.back());
+    }
   }
 
  private:
@@ -126,54 +144,77 @@ class MainComponent : public ComponentBase {
         int value = 255 * x / float(x_length);
         if (x == target_x) {
           if (2 * y == target_y - 1) {
-            line.push_back(text(L"▀")                                     //
+            line.push_back(text("▀")                                      //
                            | color(Color::HSV(hue, saturation_1, value))  //
                            | bgcolor(Color::Black));                      //
             continue;
           }
           if (2 * y == target_y) {
-            line.push_back(text(L"▀")             //
+            line.push_back(text("▀")              //
                            | color(Color::Black)  //
                            | bgcolor(Color::HSV(hue, saturation_2, value)));
             continue;
           }
         }
-        line.push_back(text(L"▀")                                     //
+        line.push_back(text("▀")                                      //
                        | color(Color::HSV(hue, saturation_1, value))  //
                        | bgcolor(Color::HSV(hue, saturation_2, value)));
       }
       array.push_back(hbox(std::move(line)));
     }
 
-    return vbox({
-               window(
-                   text(L"[ rgb-tui ]") | center,  //
-                   vbox({
-                       hbox({
-                           vbox(std::move(array)) | flex | reflect(box_color_),
-                       }),
+    Elements copy_button_list;
+    for (int i = 0; i < copy_button_.size(); i++) {
+      copy_button_text_[i] = output_[i]();
+      copy_button_list.push_back(copy_button_[i]->Render());
+      copy_button_list.push_back(text(" "));
+    }
+
+    return hbox({
+        window(text("  rgb-tui  ") | bold | center,
+               vbox({
+                   hbox({
+                       vbox(std::move(array)) | flex | reflect(box_color_),
+                   }),
+                   separator(),
+                   hbox({
+                       ColorTile(r_, g_, b_),
                        separator(),
-                       hbox({
-                           ColorTile(r_, g_, b_),
+                       vbox({
+                           color_hue_->Render(),
+                           color_saturation_->Render(),
+                           color_value_->Render(),
                            separator(),
-                           vbox({
-                               color_hue_->Render(),
-                               color_saturation_->Render(),
-                               color_value_->Render(),
-                               separator(),
-                               color_red_->Render(),
-                               color_green_->Render(),
-                               color_blue_->Render(),
-                           }) | flex,
-                       }),
-                   })),
-               hbox({
-                   window(text(L" Hexa ") | center, HexaElement(r_, g_, b_)),
-                   window(text(L" RGB ") | center, text(to_wstring(rgb_txt))),
-                   window(text(L" HSV ") | center, text(to_wstring(hsv_txt))),
-               }),
-           }) |
-           size(WIDTH, LESS_THAN, 80);
+                           color_red_->Render(),
+                           color_green_->Render(),
+                           color_blue_->Render(),
+                       }) | flex,
+                   }),
+                   dbox({
+                       separator(),
+                       text("  Copy  ") | bold | center,
+                   }),
+                   hbox({
+                       copy_button_[0]->Render(),
+                       text(" "),
+                       copy_button_[1]->Render(),
+                       text(" "),
+                       copy_button_[2]->Render(),
+                   }),
+                   text(" "),
+                   hbox({
+                       copy_button_[3]->Render(),
+                       text(" "),
+                       copy_button_[4]->Render(),
+                   }),
+                   dbox({
+                       separator(),
+                       text("  Clipboard  ") | bold | center,
+                   }),
+                   text(clipboard_),
+               }) | size(WIDTH, LESS_THAN, 80)),
+        filler(),
+    });
   };
 
   bool OnEvent(Event event) final {
@@ -197,6 +238,14 @@ class MainComponent : public ComponentBase {
       ToHSV(r_, g_, b_,  //
             h_, s_, v_);
     }
+
+    r_ = std::clamp(r_, 0, 255);
+    g_ = std::clamp(g_, 0, 255);
+    b_ = std::clamp(b_, 0, 255);
+    h_ = std::clamp(h_, 0, 255);
+    s_ = std::clamp(s_, 0, 255);
+    v_ = std::clamp(v_, 0, 255);
+
     return out;
   }
 
@@ -236,12 +285,58 @@ class MainComponent : public ComponentBase {
   int h_;
   int s_;
   int v_;
-  Component color_hue_ = Slider(L"Hue:        ", &h_, 0, 255, 1);
-  Component color_saturation_ = Slider(L"Saturation: ", &s_, 0, 255, 1);
-  Component color_value_ = Slider(L"Value:      ", &v_, 0, 255, 1);
-  Component color_red_ = Slider(L"Red:        ", &r_, 0, 255, 1);
-  Component color_green_ = Slider(L"Green:      ", &g_, 0, 255, 1);
-  Component color_blue_ = Slider(L"Blue:       ", &b_, 0, 255, 1);
+  std::string clipboard_;
+
+  Component color_hue_ = Slider("Hue:        ", &h_, 0, 255, 1);
+  Component color_saturation_ = Slider("Saturation: ", &s_, 0, 255, 1);
+  Component color_value_ = Slider("Value:      ", &v_, 0, 255, 1);
+  Component color_red_ = Slider("Red:        ", &r_, 0, 255, 1);
+  Component color_green_ = Slider("Green:      ", &g_, 0, 255, 1);
+  Component color_blue_ = Slider("Blue:       ", &b_, 0, 255, 1);
+
+  std::vector<std::function<std::string()>> output_ = {
+      [&] { return HexColor(r_, g_, b_); },
+      [&] { return fmt::format("rgb({}, {}, {})", r_, g_, b_); },
+      [&] {
+        return fmt::format("hsl({}, {}%, {}%)",
+                           int(h_ * 360. / 255.),  //
+                           int(s_ * 100. / 255.),  //
+                           int(v_ * 100. / 255.)   //
+        );
+      },
+      [&] {
+        int white = (255 - s_) * v_ / 255;
+        int black = 255 - v_;
+        return fmt::format("hwb({}, {}%, {}%)",       //
+                           int(h_ * 360. / 255.),     //
+                           int(white * 100. / 255.),  //
+                           int(black * 100. / 255.)   //
+        );
+      },
+      [&] {
+        float rf = r_ / 255.0;
+        float gf = g_ / 255.0;
+        float bf = b_ / 255.0;
+
+        float k = 1.0 - std::max({rf, gf, bf});
+        if (k == 1.0) {
+          return std::string("cmyk(0%, 0%, 0%, 100%)");
+        }
+        float c = (1.0 - rf - k) / (1.0 - k);
+        float m = (1.0 - gf - k) / (1.0 - k);
+        float y = (1.0 - bf - k) / (1.0 - k);
+        return fmt::format("cmyk({}%, {}%, {}%, {}%)",  //
+                           int(c * 100.),               //
+                           int(m * 100.),               //
+                           int(y * 100.),               //
+                           int(k * 100.)                //
+        );
+      },
+  };
+
+  std::vector<std::string> copy_button_text_;
+  std::vector<Component> copy_button_;
+
   Component container_ = Container::Vertical({
       color_hue_,
       color_saturation_,

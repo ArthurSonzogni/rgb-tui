@@ -1,5 +1,12 @@
-cmake_minimum_required (VERSION 3.11)
+cmake_minimum_required (VERSION 3.24)
+
+project(rgb-tui
+  LANGUAGES CXX
+  VERSION 1.0.0
+)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(BUILD_SHARED_LIBS FALSE)
 
 # --- Fetch FTXUI --------------------------------------------------------------
 include(FetchContent)
@@ -7,34 +14,39 @@ include(FetchContent)
 set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 
 FetchContent_Declare(ftxui
-  GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-  GIT_TAG 7b1f4d435bedecc49abc3f935bd97dc997a41977
+  GIT_REPOSITORY "https://github.com/ArthurSonzogni/ftxui"
+  GIT_TAG "a715a767b56245024dfa7469f301e4f39b866ee1"
+  GIT_PROGRESS TRUE
+  GIT_SHALLOW
+  EXCLUDE_FROM_ALL
 )
 
 FetchContent_Declare(fmt
-  GIT_REPOSITORY https://github.com/fmtlib/fmt
-  GIT_TAG 2cac8a9
+  GIT_REPOSITORY "https://github.com/fmtlib/fmt"
+  GIT_TAG "2cac8a9"
+  GIT_PROGRESS TRUE
+  GIT_SHALLOW
+  EXCLUDE_FROM_ALL
 )
 
 FetchContent_MakeAvailable(ftxui)
+FetchContent_MakeAvailable(fmt)
 
-if(NOT fmt_POPULATED)
-  message(STATUS "populate fmt > Start")
-  FetchContent_Populate(fmt)
-  set(BUILD_SHARED_LIBS FALSE)
-  message(STATUS "populate fmt > Done")
-  add_subdirectory(
-    ${fmt_SOURCE_DIR}
-    ${fmt_BINARY_DIR}
-    EXCLUDE_FROM_ALL)
+FetchContent_Declare(clip
+  GIT_REPOSITORY "https://github.com/dacap/clip"
+  GIT_TAG "1d5d20cefbe388b3cde285a4ec61114238d3fa70"
+  GIT_PROGRESS TRUE
+  GIT_SHALLOW 
+  EXCLUDE_FROM_ALL
+)
+FetchContent_GetProperties(clip)
+if(NOT clip_POPULATED)
+  FetchContent_Populate(clip)
+  add_subdirectory(${clip_SOURCE_DIR} ${clip_BINARY_DIR} EXCLUDE_FROM_ALL)
+  target_include_directories(clip INTERFACE ${clip_SOURCE_DIR})
 endif()
 
 # ------------------------------------------------------------------------------
-
-project(rgb-tui
-  LANGUAGES CXX
-  VERSION 1.0.0
-)
 
 add_executable(rgb-tui src/main.cpp)
 target_include_directories(rgb-tui PRIVATE src)
@@ -44,6 +56,7 @@ target_link_libraries(rgb-tui
   PRIVATE ftxui::dom
   PRIVATE ftxui::component # Not needed for this example.
   PRIVATE fmt::fmt
+  PRIVATE clip
 )
 
 # C++17 is used. We requires fold expressions at least.
