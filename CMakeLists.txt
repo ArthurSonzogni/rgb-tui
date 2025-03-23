@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.24)
 
 project(rgb-tui
   LANGUAGES CXX
-  VERSION 1.0.0
+  VERSION 1.2.0
 )
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -15,7 +15,7 @@ set(FETCHCONTENT_UPDATES_DISCONNECTED TRUE)
 
 FetchContent_Declare(ftxui
   GIT_REPOSITORY "https://github.com/ArthurSonzogni/ftxui"
-  GIT_TAG "a715a767b56245024dfa7469f301e4f39b866ee1"
+  GIT_TAG v6.0.0
   GIT_PROGRESS TRUE
   GIT_SHALLOW
   EXCLUDE_FROM_ALL

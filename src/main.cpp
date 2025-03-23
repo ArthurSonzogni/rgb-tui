@@ -117,7 +117,7 @@ class MainComponent : public ComponentBase {
   }
 
  private:
-  Element Render() final {
+  Element OnRender() final {
     std::string rgb_txt = fmt::format("{:3} , {:3} , {:3} ", r_, g_, b_);
     std::string hsv_txt = fmt::format("{:3}°, {:3}%, {:3}%",  //
                                       int(h_ * 360. / 255.),  //
